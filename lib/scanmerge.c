@@ -18,6 +18,10 @@
 #include "scanmerge.h"
 #include "shlist.h"
 
+#define LOG_NDEBUG 1
+#define LOG_TAG "wpa lib"
+#include "utils/Log.h"
+
 #define IS_HIDDEN_AP(a)	(((a)->ssid_len == 0) || ((a)->ssid[0] == '\0'))
 
 scan_ssid_t *scan_get_ssid( scan_result_t *res_ptr )
@@ -325,6 +329,11 @@ scan_result_t *scan_get_by_bssid( struct wpa_driver_ti_data *mydrv, u8 *bssid )
     SHLIST *item;
     scan_result_t *cur_res;
     scan_ssid_t *p_ssid;
+
+    if (bssid) {
+        LOGD("scan_get_by_bssid: bssid=%02x:%02x:%02x:%02x:%02x:%02x",
+             bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]);
+    }
 
     item = shListGetFirstItem(head);
     if( item == NULL )
