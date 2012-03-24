@@ -368,7 +368,7 @@ TI_STATUS buildProbeReqTemplate(siteMgr_t *pSiteMgr, TSetTemplate *pTemplate, TS
         size += sizeof(dot11_eleHdr_t) + pSiteMgr->uWscIeSize + DOT11_OUI_LEN;
         pBuf += sizeof(dot11_eleHdr_t) + pSiteMgr->uWscIeSize + DOT11_OUI_LEN;	
     }
-#endif /*SUPPL_WPS_SUPPORT*/
+#endif /* SUPPL_WPS_SUPPORT */
 
 	pTemplate->len = size;
 	
@@ -873,7 +873,3 @@ TI_STATUS buildArpRspTemplate(siteMgr_t *pSiteMgr, TSetTemplate *pTemplate, TIpA
 
 	return TI_OK;
 }
-
-   
-   
-   

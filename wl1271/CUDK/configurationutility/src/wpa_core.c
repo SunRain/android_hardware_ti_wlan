@@ -160,15 +160,6 @@ VOID WpaCore_Destroy(THandle hWpaCore)
 {
 	TWpaCore* pWpaCore = (TWpaCore*)hWpaCore;
 
-#ifdef ANDROID
-	if(pWpaCore->hIpcWpa)
-	{
-		/* Restore configuration back to AP_SCAN 1 for Android */
-		IpcWpa_Command(pWpaCore->hIpcWpa, (PS8)"AP_SCAN 1", FALSE);
-		IpcWpa_Command(pWpaCore->hIpcWpa, (PS8)"SAVE_CONFIG", FALSE);
-	}
-#endif
-
 	if(pWpaCore->hIpcWpa)
 		IpcWpa_Destroy(pWpaCore->hIpcWpa);
 #ifdef CONFIG_WPS
@@ -425,7 +416,9 @@ S32 WpaCore_GetDefaultKey(THandle hWpaCore, U32* pDefaultKeyIndex)
 S32 WpaCore_StartWpsPIN(THandle hWpaCore)
 {
 	TWpaCore* pWpaCore = (TWpaCore*)hWpaCore;
+#ifdef SUPPL_WPS_SUPPORT
 	S8 cmd[100];
+#endif
 
 	pWpaCore->WpaSupplParams.WscMode = WSC_MODE_PIN;
 
@@ -433,19 +426,21 @@ S32 WpaCore_StartWpsPIN(THandle hWpaCore)
 	os_sprintf(cmd, "WPS_PIN any");
 	IpcWpa_Command(pWpaCore->hIpcWpa, cmd, TRUE);
 #endif
-	
+
 	return OK;
 }
 
 S32 WpaCore_StartWpsPBC(THandle hWpaCore)
 {
 	TWpaCore* pWpaCore = (TWpaCore*)hWpaCore;
+#ifdef SUPPL_WPS_SUPPORT
 	S8 cmd[100];
+#endif
 
 	pWpaCore->WpaSupplParams.WscMode = WSC_MODE_PBC;
 
 #ifdef SUPPL_WPS_SUPPORT
-	os_sprintf(cmd, (PS8)"WPS_PBC");
+	os_sprintf(cmd, "WPS_PBC");
 	IpcWpa_Command(pWpaCore->hIpcWpa, cmd, TRUE);
 #endif
 

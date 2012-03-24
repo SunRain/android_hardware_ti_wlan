@@ -862,19 +862,19 @@ void scanResultTable_UpdateWSCParams (TSiteEntry *pSite, TScanFrameInfo *pFrame)
     
         do
         {
-            COPY_BIG_END_WORD(&tlvPtrType, tlvPtr);
+            tlvPtrType = WLANTOHS (WLAN_WORD(tlvPtr));
     
             if (tlvPtrType == DOT11_WSC_DEVICE_PASSWORD_ID)
             {
                 tlvPtr+=2;
                 tlvPtr+=2;
-                COPY_BIG_END_WORD(&selectedMethod, tlvPtr);
+                selectedMethod = WLANTOHS (WLAN_WORD(tlvPtr));
                 break;
             }
             else
             {
                 tlvPtr+=2;
-                COPY_BIG_END_WORD(&tlvPtrLen, tlvPtr);
+                tlvPtrLen = WLANTOHS (WLAN_WORD(tlvPtr));
                 tlvPtr+=tlvPtrLen+2;
             }
         } while ((tlvPtr < endPtr) && (selectedMethod == 0));

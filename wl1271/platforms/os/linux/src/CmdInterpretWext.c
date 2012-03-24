@@ -57,11 +57,10 @@
 #include "admCtrl.h"
 #include "freq.h"
 
-
 static TI_INT32 cmdInterpret_Event(IPC_EV_DATA* pData);
 static int cmdInterpret_setSecurityParams (TI_HANDLE hCmdInterpret);
 static int cmdInterpret_initEvents(TI_HANDLE hCmdInterpret);
-
+static int cmdInterpret_unregisterEvents(TI_HANDLE hCmdInterpret, TI_HANDLE hEvHandler);
 
 #define WEXT_FREQ_CHANNEL_NUM_MAX_VAL	1000
 #define WEXT_FREQ_KHZ_CONVERT			3
@@ -83,6 +82,9 @@ typedef struct
     TI_UINT32       assocRespLen;
 } cckm_assocInformation_t;
 
+#define ASSOC_RESP_FIXED_DATA_LEN 6
+/* 1500 is the recommended size by the Motorola Standard team. TI recommendation is 700 */
+#define MAX_BEACON_BODY_LENGTH    1500
 #define BEACON_HEADER_FIX_SIZE    12
 #define CCKM_START_EVENT_SIZE     23 /* cckm-start string + timestamp + bssid + null */
 #endif
@@ -117,6 +119,9 @@ TI_HANDLE cmdInterpret_Create (TI_HANDLE hOs)
 TI_STATUS cmdInterpret_Destroy (TI_HANDLE hCmdInterpret, TI_HANDLE hEvHandler)
 {
     cmdInterpret_t *pCmdInterpret = (cmdInterpret_t *)hCmdInterpret;
+
+    /* Unregister events */
+    cmdInterpret_unregisterEvents ((TI_HANDLE)pCmdInterpret, hEvHandler);
 
     /* Release allocated memory */
     os_memoryFree (pCmdInterpret->hOs, pCmdInterpret, sizeof(cmdInterpret_t));
@@ -575,23 +580,27 @@ int cmdInterpret_convertAndExecute(TI_HANDLE hCmdInterpret, TConfigCommand *cmdO
         /* trigger scanning (list cells) */
     case SIOCSIWSCAN:
         {
-            struct iw_scan_req scanReq;
+            struct iw_scan_req pScanReq;
             TScanParams scanParams;
-            pParam->content.pScanParams = &scanParams;
 
+            pParam->content.pScanParams = &scanParams;
 
             /* Init the parameters in case the Supplicant doesn't support them*/
             pParam->content.pScanParams->desiredSsid.len = 0;
-            scanReq.scan_type = SCAN_TYPE_TRIGGERED_ACTIVE;
+            pScanReq.scan_type = SCAN_TYPE_TRIGGERED_ACTIVE;
 
-            if (cmdObj->param3)
+            if (wrqu->data.pointer)
             {
-                os_memoryCopy(pCmdInterpret->hOs, &scanReq, cmdObj->param3, sizeof(scanReq));
-
+                if ( copy_from_user( &pScanReq, wrqu->data.pointer, sizeof(pScanReq)) )
+                {
+                    printk("CRITICAL: Could not copy data from user space!!!");
+                    res = -EFAULT;
+                    goto cmd_end;
+                }
                 if (wrqu->data.flags & IW_SCAN_THIS_ESSID)
                 {
-                    pParam->content.pScanParams->desiredSsid.len = scanReq.essid_len;
-                    os_memoryCopy(pCmdInterpret->hOs,pParam->content.pScanParams->desiredSsid.str, scanReq.essid, scanReq.essid_len);
+                    pParam->content.pScanParams->desiredSsid.len = pScanReq.essid_len;
+                    os_memoryCopy(pCmdInterpret->hOs,pParam->content.pScanParams->desiredSsid.str, pScanReq.essid, pScanReq.essid_len);
                 }
                 else
                 {
@@ -600,7 +609,7 @@ int cmdInterpret_convertAndExecute(TI_HANDLE hCmdInterpret, TConfigCommand *cmdO
             }
 
             /* set the scan type according to driver trigger scan */
-            if (IW_SCAN_TYPE_PASSIVE == scanReq.scan_type)
+            if (IW_SCAN_TYPE_PASSIVE == pScanReq.scan_type)
             {
                 pParam->content.pScanParams->scanType = SCAN_TYPE_TRIGGERED_PASSIVE;
             }
@@ -1530,6 +1539,25 @@ static int cmdInterpret_initEvents(TI_HANDLE hCmdInterpret)
 }
 
 
+/* Unregister events */
+static int cmdInterpret_unregisterEvents(TI_HANDLE hCmdInterpret, TI_HANDLE hEvHandler)
+{
+    cmdInterpret_t *pCmdInterpret = (cmdInterpret_t *)(hCmdInterpret);
+    IPC_EVENT_PARAMS evParams;
+    int i = 0;
+    os_setDebugOutputToLogger(TI_FALSE);
+
+    for (i=0; i<IPC_EVENT_MAX; i++)
+    {
+        evParams.uEventType =  i;
+        evParams.uEventID = pCmdInterpret->hEvents[i];
+        EvHandlerUnRegisterEvent (pCmdInterpret->hEvHandler, &evParams);
+    }
+
+    return TI_OK;
+}
+
+
 /* Handle driver events and convert to WEXT format */
 static TI_INT32 cmdInterpret_Event(IPC_EV_DATA* pData)
 {
@@ -1661,7 +1689,7 @@ static TI_INT32 cmdInterpret_Event(IPC_EV_DATA* pData)
             pParam->paramLength = sizeof(TAssocReqBuffer);
             cmdDispatch_GetParam(pCmdInterpret->hCmdDispatch, pParam);
 
-            cckm_assoc.assocRespLen = Param->content.assocReqBuffer.bufferSize - ASSOC_RESP_FIXED_DATA_LEN ;
+            cckm_assoc.assocRespLen = Param.content.assocReqBuffer.bufferSize - ASSOC_RESP_FIXED_DATA_LEN ;
             cckm_assoc.assocRespBuffer = os_memoryAlloc (pCmdInterpret->hOs, cckm_assoc.assocRespLen);
             if (!cckm_assoc.assocRespBuffer) {
                 res = TI_NOK;
@@ -1761,20 +1789,8 @@ event_end:
 
                 os_printf ("Preauthentication list (%d entries)!\n",pCandList->NumCandidates);
 
-
-
                 for (i=0; i<pCandList->NumCandidates; i++)
                 {
-
-                    os_printf ("Preauthentication list  BSSID: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x \n",
-                                pCandList->CandidateList[i].BSSID[0],
-                                pCandList->CandidateList[i].BSSID[1],
-                                pCandList->CandidateList[i].BSSID[2],
-                                pCandList->CandidateList[i].BSSID[3],
-                                pCandList->CandidateList[i].BSSID[4],
-                                pCandList->CandidateList[i].BSSID[5]
-                              );
-
                     os_memorySet (pCmdInterpret->hOs,&pcand, 0, sizeof(pcand));
                     pcand.flags |= IW_PMKID_CAND_PREAUTH;
 

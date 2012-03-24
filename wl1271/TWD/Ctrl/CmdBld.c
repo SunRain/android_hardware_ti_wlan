@@ -114,9 +114,6 @@ TI_HANDLE cmdBld_Create (TI_HANDLE hOs)
 
     pCmdBld->hOs = hOs;
 
-	/*set all command status to valid*/
-	os_memorySet(hOs,pCmdBld->aInitSeqCmdsStatus ,1,sizeof(pCmdBld->aInitSeqCmdsStatus));
-	
     /* Create the Params object */
     /* make this code flat, move it to configure */
     {
@@ -341,9 +338,6 @@ static TI_STATUS __cmd_probe_req (TI_HANDLE hCmdBld)
 {
     TI_STATUS   tStatus = TI_OK;
 
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_PROBE_REQ))
-		return TI_NOK;
-
     /* keep space for 2.4 GHz probe request */
     tStatus = cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
                                                   NULL, 
@@ -370,9 +364,6 @@ static TI_STATUS __cmd_probe_req (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_null_data (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_NULL_DATA))
-		return TI_NOK;
-
     return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
                                              NULL, 
                                              DB_WLAN(hCmdBld).nullTemplateSize,
@@ -384,9 +375,6 @@ static TI_STATUS __cmd_null_data (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_burst_mode_enable (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_BURST_MODE_ENABLE ))
-		return TI_NOK;
-
 	return cmdBld_CfgIeBurstMode (hCmdBld, 
 							  DB_AC(hCmdBld).isBurstModeEnabled, 
 							  (void *)cmdBld_ConfigSeq, 
@@ -396,9 +384,6 @@ static TI_STATUS __cmd_burst_mode_enable (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_disconn (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_DISCONN))
-		return TI_NOK;
-
     return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
                                              NULL, 
                                              DB_WLAN(hCmdBld).disconnTemplateSize,
@@ -410,9 +395,6 @@ static TI_STATUS __cmd_disconn (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_ps_poll (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_PS_POLL))
-		return TI_NOK;
-
     return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
                                              NULL, 
                                              DB_WLAN(hCmdBld).PsPollTemplateSize,
@@ -425,9 +407,6 @@ static TI_STATUS __cmd_ps_poll (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_qos_null_data (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_QOS_NULL_DATA))
-		return TI_NOK;
-
     return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
                                              NULL, 
                                              DB_WLAN(hCmdBld).qosNullDataTemplateSize,
@@ -440,9 +419,6 @@ static TI_STATUS __cmd_qos_null_data (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_probe_resp (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_PROBE_RESP))
-		return TI_NOK;
-
     return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
                                              NULL, 
                                              DB_WLAN(hCmdBld).probeResponseTemplateSize,
@@ -455,9 +431,6 @@ static TI_STATUS __cmd_probe_resp (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_beacon (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_BEACON))
-		return TI_NOK;
-
     return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
                                              NULL, 
                                              DB_WLAN(hCmdBld).beaconTemplateSize,
@@ -471,9 +444,6 @@ static TI_STATUS __cmd_keep_alive_tmpl (TI_HANDLE hCmdBld)
 {
     TI_UINT32   index;
     TI_STATUS   status = TI_NOK;
-
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_KEEP_ALIVE_TMPL))
-		return TI_NOK;
 
     /* 
      * config templates 
@@ -509,9 +479,6 @@ static TI_STATUS __cmd_keep_alive_tmpl (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_mem (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_MEM))
-		return TI_NOK;
-
     /* Configure the weight among the different hardware queues */
     return cmdBld_CfgIeConfigMemory (hCmdBld, &DB_DMA(hCmdBld), (void *)cmdBld_ConfigSeq, hCmdBld);
 }
@@ -519,9 +486,6 @@ static TI_STATUS __cfg_mem (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rx_msdu_life_time (TI_HANDLE hCmdBld)
 {    
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RX_MSDU_LIFE_TIME))
-		return TI_NOK;
-
     /* Configure the Rx Msdu Life Time (expiry time of de-fragmentation in FW) */
     return cmdBld_CfgIeRxMsduLifeTime (hCmdBld, 
                                        DB_WLAN(hCmdBld).MaxRxMsduLifetime, 
@@ -532,9 +496,6 @@ static TI_STATUS __cfg_rx_msdu_life_time (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rx (TI_HANDLE hCmdBld)
 {    
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RX))
-		return TI_NOK;
-
     return cmdBld_CfgIeRx (hCmdBld, 
                            DB_WLAN(hCmdBld).RxConfigOption, 
                            DB_WLAN(hCmdBld).RxFilterOption, 
@@ -545,9 +506,6 @@ static TI_STATUS __cfg_rx (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_ac_params_0 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_AC_PARAMS_0))
-		return TI_NOK;
-
     /*
      * NOTE: Set following parameter only if configured.
      *       Otherwise, is contains garbage.
@@ -566,9 +524,6 @@ static TI_STATUS __cfg_ac_params_0 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_ac_params_1 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_AC_PARAMS_1))
-		return TI_NOK;
-
     /*
      * NOTE: Set following parameter only if configured.
      *       Otherwise, is contains garbage.
@@ -587,9 +542,6 @@ static TI_STATUS __cfg_ac_params_1 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_ac_params_2 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_AC_PARAMS_2))
-		return TI_NOK;
-
     /*
      * NOTE: Set following parameter only if configured.
      *       Otherwise, is contains garbage.
@@ -608,9 +560,6 @@ static TI_STATUS __cfg_ac_params_2 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_ac_params_3 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_AC_PARAMS_3))
-		return TI_NOK;
-
     /*
      * NOTE: Set following parameter only if configured.
      *       Otherwise, is contains garbage.
@@ -629,9 +578,6 @@ static TI_STATUS __cfg_ac_params_3 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_tid_0 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_TID_0))
-		return TI_NOK;
-
     /*
      * NOTE: Set following parameter only if configured.
      *       Otherwise, is contains garbage.
@@ -649,8 +595,6 @@ static TI_STATUS __cfg_tid_0 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_tid_1 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_TID_1))
-		return TI_NOK;
     /*
      * NOTE: Set following parameter only if configured.
      *       Otherwise, is contains garbage.
@@ -668,8 +612,6 @@ static TI_STATUS __cfg_tid_1 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_tid_2 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_TID_2))
-		return TI_NOK;
     /*
      * NOTE: Set following parameter only if configured.
      *       Otherwise, is contains garbage.
@@ -687,8 +629,6 @@ static TI_STATUS __cfg_tid_2 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_tid_3 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_TID_3))
-		return TI_NOK;
     /*
      * NOTE: Set following parameter only if configured.
      *       Otherwise, is contains garbage.
@@ -710,8 +650,6 @@ static TI_STATUS __cfg_ps_rx_streaming (TI_HANDLE hCmdBld)
     TI_STATUS        eStatus;
     TPsRxStreaming *pPsRxStreaming;
 
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_PS_RX_STREAMING ))
-		return TI_NOK;
 
     if (!DB_WLAN(hCmdBld).bJoin)
     {
@@ -756,8 +694,6 @@ static TI_STATUS __cfg_rx_data_filter (TI_HANDLE hCmdBld)
     TI_STATUS       eStatus;
     TRxDataFilter   *pFilters;
 
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RX_DATA_FILTER ))
-		return TI_NOK;
 
     if (DB_RX_DATA_FLTR(hCmdBld).bEnabled) 
     {
@@ -824,9 +760,6 @@ static TI_STATUS __cfg_rx_data_filter (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_pd_threshold (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_PD_THRESHOLD))
-		return TI_NOK;
-
     return cmdBld_CfgIePacketDetectionThreshold (hCmdBld, 
                                                  DB_WLAN(hCmdBld).PacketDetectionThreshold, 
                                                  (void *)cmdBld_ConfigSeq, 
@@ -836,18 +769,12 @@ static TI_STATUS __cfg_pd_threshold (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_slot_time (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_SLOT_TIME))
-		return TI_NOK;
-
     return cmdBld_CfgIeSlotTime (hCmdBld, DB_WLAN(hCmdBld).SlotTime, (void *)cmdBld_ConfigSeq, hCmdBld);
 }
 
 
 static TI_STATUS __cfg_arp_ip_filter (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_ARP_IP_FILTER))
-		return TI_NOK;
-
     return cmdBld_CfgIeArpIpFilter (hCmdBld, 
                                     DB_WLAN(hCmdBld).arp_IP_addr, 
                                     (EArpFilterType)DB_WLAN(hCmdBld).arpFilterType, 
@@ -857,9 +784,6 @@ static TI_STATUS __cfg_arp_ip_filter (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_group_address_table (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_GROUP_ADDRESS_TABLE))
-		return TI_NOK;
-
     return cmdBld_CfgIeGroupAdressTable (hCmdBld, 
                                          DB_WLAN(hCmdBld).numGroupAddrs, 
                                          DB_WLAN(hCmdBld).aGroupAddr, 
@@ -871,9 +795,6 @@ static TI_STATUS __cfg_group_address_table (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_service_period_timeout (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_SERVICE_PERIOD_TIMEOUT))
-		return TI_NOK;
-
     return cmdBld_CfgIeServicePeriodTimeout (hCmdBld, 
                                              &DB_WLAN(hCmdBld).rxTimeOut, 
                                              (void *)cmdBld_ConfigSeq, 
@@ -883,9 +804,6 @@ static TI_STATUS __cfg_service_period_timeout (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rts_threshold (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RTS_THRESHOLD))
-		return TI_NOK;
-
     return cmdBld_CfgRtsThreshold (hCmdBld, 
                                    DB_WLAN(hCmdBld).RtsThreshold, 
                                    (void *)cmdBld_ConfigSeq, 
@@ -894,9 +812,6 @@ static TI_STATUS __cfg_rts_threshold (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_dco_itrim_params (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_DCO_ITRIM_PARAMS))
-		return TI_NOK;
-
     return cmdBld_CfgDcoItrimParams (hCmdBld, 
                                      DB_WLAN(hCmdBld).dcoItrimEnabled, 
                                      DB_WLAN(hCmdBld).dcoItrimModerationTimeoutUsec, 
@@ -906,9 +821,6 @@ static TI_STATUS __cfg_dco_itrim_params (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_fragment_threshold (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_FRAGMENT_THRESHOLD))
-		return TI_NOK;
-
     return cmdBld_CfgIeFragmentThreshold (hCmdBld, 
                                           DB_WLAN(hCmdBld).FragmentThreshold, 
                                           (void *)cmdBld_ConfigSeq, 
@@ -918,9 +830,6 @@ static TI_STATUS __cfg_fragment_threshold (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_pm_config (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_PM_CONFIG))
-		return TI_NOK;
-
     return cmdBld_CfgIePmConfig (hCmdBld, 
                                  DB_WLAN(hCmdBld).uHostClkSettlingTime,
                                  DB_WLAN(hCmdBld).uHostFastWakeupSupport, 
@@ -931,9 +840,6 @@ static TI_STATUS __cfg_pm_config (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_beacon_filter_opt (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_BEACON_FILTER_OPT))
-		return TI_NOK;
-
     /* Set The Beacon Filter in HAL */
     return cmdBld_CfgIeBeaconFilterOpt (hCmdBld, 
                                         DB_WLAN(hCmdBld).beaconFilterParams.desiredState,
@@ -945,9 +851,6 @@ static TI_STATUS __cfg_beacon_filter_opt (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_beacon_filter_table (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_BEACON_FILTER_TABLE))
-		return TI_NOK;
-
     return cmdBld_CfgIeBeaconFilterTable (hCmdBld, 
                                           DB_WLAN(hCmdBld).beaconFilterIETable.numberOfIEs,
                                           DB_WLAN(hCmdBld).beaconFilterIETable.IETable,
@@ -959,9 +862,6 @@ static TI_STATUS __cfg_beacon_filter_table (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_tx_cmplt_pacing (TI_HANDLE hCmdBld)
 {    
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_TX_CMPLT_PACING))
-		return TI_NOK;
-
     return cmdBld_CfgIeTxCmpltPacing (hCmdBld, 
                                       DB_WLAN(hCmdBld).TxCompletePacingThreshold,
                                       DB_WLAN(hCmdBld).TxCompletePacingTimeout,
@@ -972,9 +872,6 @@ static TI_STATUS __cfg_tx_cmplt_pacing (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rx_intr_pacing (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RX_INTR_PACING))
-		return TI_NOK;
-
     return cmdBld_CfgIeRxIntrPacing (hCmdBld, 
                                      DB_WLAN(hCmdBld).RxIntrPacingThreshold,
                                      DB_WLAN(hCmdBld).RxIntrPacingTimeout,
@@ -1024,9 +921,6 @@ static TI_STATUS __cfg_coex_activity_table (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_cca_threshold (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_CCA_THRESHOLD))
-		return TI_NOK;
-
     return cmdBld_CfgIeCcaThreshold (hCmdBld, 
                                      DB_WLAN(hCmdBld).ch14TelecCca, 
                                      (void *)cmdBld_ConfigSeq, 
@@ -1037,9 +931,6 @@ static TI_STATUS __cfg_cca_threshold (TI_HANDLE hCmdBld)
 static TI_STATUS __cfg_bcn_brc_options (TI_HANDLE hCmdBld)
 {
     TPowerMgmtConfig powerMgmtConfig;                   
-
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_BCN_BRC_OPTIONS))
-		return TI_NOK;
 
     /* Beacon broadcast options */
     powerMgmtConfig.BcnBrcOptions = DB_WLAN(hCmdBld).BcnBrcOptions;
@@ -1054,9 +945,6 @@ static TI_STATUS __cfg_bcn_brc_options (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_enable_rx (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_ENABLE_RX))
-		return TI_NOK;
-
     /* Enable rx path on the hardware */
     return cmdBld_CmdEnableRx (hCmdBld, (void *)cmdBld_ConfigSeq, hCmdBld);
 }
@@ -1064,9 +952,6 @@ static TI_STATUS __cmd_enable_rx (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_enable_tx (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_ENABLE_TX))
-		return TI_NOK;
-
     /* Enable tx path on the hardware */
     return cmdBld_CmdEnableTx (hCmdBld, 
                                DB_DEFAULT_CHANNEL(hCmdBld), 
@@ -1077,9 +962,6 @@ static TI_STATUS __cmd_enable_tx (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_ps_wmm (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_PS_WMM))
-		return TI_NOK;
-
     /* ACX for a work around for Wi-Fi test */
     return cmdBld_CfgIePsWmm (hCmdBld, 
                               DB_WLAN(hCmdBld).WiFiWmmPS, 
@@ -1090,9 +972,6 @@ static TI_STATUS __cfg_ps_wmm (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rssi_snr_weights (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_WEIGHTS))
-		return TI_NOK;
-
     /* RSSI/SNR Weights for Average calculations */
     return cmdBld_CfgIeRssiSnrWeights (hCmdBld, 
                                        &DB_WLAN(hCmdBld).tRssiSnrWeights, 
@@ -1105,9 +984,6 @@ static TI_STATUS __cfg_event_scan_cmplt (TI_HANDLE hCmdBld)
 {    
     TCmdBld   *pCmdBld = (TCmdBld *)hCmdBld;
 
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_EVENT_SCAN_CMPLT))
-		return TI_NOK;
-
     /* Enable the scan complete interrupt source */
     return eventMbox_UnMaskEvent (pCmdBld->hEventMbox, 
                                TWD_OWN_EVENT_SCAN_CMPLT, 
@@ -1119,9 +995,6 @@ static TI_STATUS __cfg_event_sps_scan_cmplt (TI_HANDLE hCmdBld)
 {    
     TCmdBld   *pCmdBld = (TCmdBld *)hCmdBld;
 
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_EVENT_SPS_SCAN_CMPLT))
-		return TI_NOK;
-
     return eventMbox_UnMaskEvent (pCmdBld->hEventMbox, 
                                TWD_OWN_EVENT_SPS_SCAN_CMPLT, 
                                (void *)cmdBld_ConfigSeq, 
@@ -1132,8 +1005,6 @@ static TI_STATUS __cfg_event_plt_rx_calibration_cmplt (TI_HANDLE hCmdBld)
 {
     TCmdBld   *pCmdBld = (TCmdBld *)hCmdBld;
 
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_EVENT_PLT_RX_CALIBRATION_CMPLT))
-		return TI_NOK;
     return eventMbox_UnMaskEvent (pCmdBld->hEventMbox, 
                                TWD_OWN_EVENT_PLT_RX_CALIBRATION_COMPLETE, 
                                (void *)cmdBld_ConfigSeq, 
@@ -1143,18 +1014,12 @@ static TI_STATUS __cfg_event_plt_rx_calibration_cmplt (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_hw_enc_dec_enable (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_HW_ENC_DEC_ENABLE))
-		return TI_NOK;
-
     return cmdBld_CfgHwEncDecEnable (hCmdBld, TI_TRUE, (void *)cmdBld_ConfigSeq, hCmdBld);
 }
 
 
 static TI_STATUS __cfg_rssi_snr_trigger_0 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_TRIGGER_0))
-		return TI_NOK;
-
     /* RSSI/SNR Troggers */
     return  cmdBld_CfgIeRssiSnrTrigger (hCmdBld, 
                                         &DB_WLAN(hCmdBld).tRssiSnrTrigger[0], 
@@ -1165,9 +1030,6 @@ static TI_STATUS __cfg_rssi_snr_trigger_0 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rssi_snr_trigger_1 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_TRIGGER_1))
-		return TI_NOK;
-
     /* RSSI/SNR Troggers */
     return  cmdBld_CfgIeRssiSnrTrigger (hCmdBld, 
                                         &DB_WLAN(hCmdBld).tRssiSnrTrigger[1], 
@@ -1178,9 +1040,6 @@ static TI_STATUS __cfg_rssi_snr_trigger_1 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rssi_snr_trigger_2 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_TRIGGER_2))
-		return TI_NOK;
-
     /* RSSI/SNR Troggers */
     return  cmdBld_CfgIeRssiSnrTrigger (hCmdBld, 
                                         &DB_WLAN(hCmdBld).tRssiSnrTrigger[2], 
@@ -1191,9 +1050,6 @@ static TI_STATUS __cfg_rssi_snr_trigger_2 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rssi_snr_trigger_3 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_TRIGGER_3))
-		return TI_NOK;
-
     /* RSSI/SNR Troggers */
     return  cmdBld_CfgIeRssiSnrTrigger (hCmdBld, 
                                         &DB_WLAN(hCmdBld).tRssiSnrTrigger[3], 
@@ -1204,9 +1060,6 @@ static TI_STATUS __cfg_rssi_snr_trigger_3 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rssi_snr_trigger_4 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_TRIGGER_4))
-		return TI_NOK;
-
     /* RSSI/SNR Troggers */
     return  cmdBld_CfgIeRssiSnrTrigger (hCmdBld, 
                                         &DB_WLAN(hCmdBld).tRssiSnrTrigger[4], 
@@ -1217,9 +1070,6 @@ static TI_STATUS __cfg_rssi_snr_trigger_4 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rssi_snr_trigger_5 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_TRIGGER_5))
-		return TI_NOK;
-
     /* RSSI/SNR Troggers */
     return  cmdBld_CfgIeRssiSnrTrigger (hCmdBld, 
                                         &DB_WLAN(hCmdBld).tRssiSnrTrigger[5], 
@@ -1230,9 +1080,6 @@ static TI_STATUS __cfg_rssi_snr_trigger_5 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rssi_snr_trigger_6 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_TRIGGER_6))
-		return TI_NOK;
-
     /* RSSI/SNR Troggers */
     return  cmdBld_CfgIeRssiSnrTrigger (hCmdBld, 
                                         &DB_WLAN(hCmdBld).tRssiSnrTrigger[6], 
@@ -1243,9 +1090,6 @@ static TI_STATUS __cfg_rssi_snr_trigger_6 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rssi_snr_trigger_7 (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RSSI_SNR_TRIGGER_7))
-		return TI_NOK;
-
     /* RSSI/SNR Troggers */
     return  cmdBld_CfgIeRssiSnrTrigger (hCmdBld, 
                                         &DB_WLAN(hCmdBld).tRssiSnrTrigger[7], 
@@ -1256,9 +1100,6 @@ static TI_STATUS __cfg_rssi_snr_trigger_7 (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_max_tx_retry (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_MAX_TX_RETRY))
-		return TI_NOK;
-
     return cmdBld_CfgIeMaxTxRetry (hCmdBld, 
                                    &DB_WLAN(hCmdBld).roamTriggers, 
                                    (void *)cmdBld_ConfigSeq, 
@@ -1269,9 +1110,6 @@ static TI_STATUS __cfg_max_tx_retry (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_split_scan_timeout (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_SPLIT_SCAN_TIMEOUT))
-		return TI_NOK;
-
     return cmdBld_CmdIeSetSplitScanTimeOut (hCmdBld, 
                                             DB_WLAN(hCmdBld).uSlicedScanTimeOut, 
                                             (void *)cmdBld_ConfigSeq, 
@@ -1281,10 +1119,7 @@ static TI_STATUS __cfg_split_scan_timeout (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_conn_monit_params (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_CONN_MONIT_PARAMS ))
-		return TI_NOK;
-
-	return cmdBld_CfgIeConnMonitParams (hCmdBld, 
+    return cmdBld_CfgIeConnMonitParams (hCmdBld, 
                                         &DB_WLAN(hCmdBld).roamTriggers, 
                                         (void *)cmdBld_ConfigSeq, 
                                         hCmdBld);
@@ -1293,10 +1128,7 @@ static TI_STATUS __cfg_conn_monit_params (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_bet (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_BET ))
-		return TI_NOK;
-
-	return cmdBld_CfgBet (hCmdBld, 
+    return cmdBld_CfgBet (hCmdBld, 
                           DB_WLAN(hCmdBld).BetEnable, 
                           DB_WLAN(hCmdBld).MaximumConsecutiveET,
                           (void *)cmdBld_ConfigSeq, 
@@ -1306,9 +1138,6 @@ static TI_STATUS __cfg_bet (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_cts_protection (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_CTS_PROTECTION ))
-		return TI_NOK;
-
     return cmdBld_CfgIeCtsProtection (hCmdBld,
                                       DB_WLAN(hCmdBld).CtsToSelf, 
                                       (void *)cmdBld_ConfigSeq, 
@@ -1318,9 +1147,6 @@ static TI_STATUS __cfg_cts_protection (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_radio_params (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RADIO_PARAMS))
-		return TI_NOK;
-
     return cmdBld_CfgIeRadioParams (hCmdBld, 
                                     &DB_RADIO(hCmdBld), 
                                     (void *)cmdBld_ConfigSeq, 
@@ -1330,9 +1156,6 @@ static TI_STATUS __cfg_radio_params (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_extended_radio_params (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_EXTENDED_RADIO_PARAMS))
-		return TI_NOK;
-
     return cmdBld_CfgIeExtendedRadioParams (hCmdBld,
 											&DB_EXT_RADIO(hCmdBld),
 											(void *)cmdBld_ConfigSeq,
@@ -1342,9 +1165,6 @@ static TI_STATUS __cfg_extended_radio_params (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_platform_params (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_PLATFORM_PARAMS))
-		return TI_NOK;
-
     return cmdBld_CfgPlatformGenParams(hCmdBld, 
                                       &DB_GEN(hCmdBld), 
                                       (void *)cmdBld_ConfigSeq, 
@@ -1355,8 +1175,6 @@ static TI_STATUS __cfg_platform_params (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_tx_rate_policy (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_TX_RATE_POLICY))
-		return TI_NOK;
     /*
      * JOIN (use the local parameters), otherwize the CORE will reconnect
      */
@@ -1375,9 +1193,6 @@ static TI_STATUS __cfg_tx_rate_policy (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_beacon_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_BEACON_JOIN))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin && DB_TEMP(hCmdBld).Beacon.Size != 0)
     {
         return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
@@ -1394,9 +1209,6 @@ static TI_STATUS __cmd_beacon_join (TI_HANDLE hCmdBld)
     
 static TI_STATUS __cmd_probe_resp_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_PROBE_RESP_JOIN))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin && DB_TEMP(hCmdBld).ProbeResp.Size != 0)
     {
         return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
@@ -1415,9 +1227,6 @@ static TI_STATUS __cmd_probe_resp_join (TI_HANDLE hCmdBld)
 static TI_STATUS __cmd_probe_req_join (TI_HANDLE hCmdBld)
 {
     TI_STATUS   tStatus;
-
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_PROBE_REQ_JOIN))
-		return TI_NOK;
 
     /* set Probe Req template also if join == false ! */
     if (DB_TEMP(hCmdBld).ProbeReq24.Size != 0)
@@ -1453,9 +1262,6 @@ static TI_STATUS __cmd_probe_req_join (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_null_data_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_NULL_DATA_JOIN))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin && DB_TEMP(hCmdBld).NullData.Size != 0)
     {
         return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
@@ -1470,28 +1276,8 @@ static TI_STATUS __cmd_null_data_join (TI_HANDLE hCmdBld)
     return TI_NOK;
 }
 
-static TI_STATUS __cmd_qos_null_data_join (TI_HANDLE hCmdBld)
-{
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_QOS_NULL_DATA_JOIN))
-		return TI_NOK;
-
-    if (DB_WLAN(hCmdBld).bJoin && DB_TEMP(hCmdBld).QosNullData.Size != 0)
-    {
-        return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
-                                                   &(DB_TEMP(hCmdBld).QosNullData), 
-                                                 (TI_UINT16)DB_TEMP(hCmdBld).QosNullData.Size,
-                                                   TEMPLATE_QOS_NULL_DATA,
-                                                   0,
-                                                 (void *)cmdBld_ConfigSeq,
-                                                 hCmdBld);
-    }
-    return TI_NOK;
-}
 static TI_STATUS __cmd_disconn_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_DISCONN_JOIN))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin && DB_TEMP(hCmdBld).Disconn.Size != 0)
     {
         return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
@@ -1508,9 +1294,6 @@ static TI_STATUS __cmd_disconn_join (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_ps_poll_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_PS_POLL_JOIN))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin && DB_TEMP(hCmdBld).PsPoll.Size != 0)
     {
         return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
@@ -1527,8 +1310,6 @@ static TI_STATUS __cmd_ps_poll_join (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_arp_rsp (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_ARP_RSP))
-		return TI_NOK;
 
    return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
                                                    NULL, 
@@ -1542,9 +1323,7 @@ static TI_STATUS __cmd_arp_rsp (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_arp_rsp_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_ARP_RSP_JOIN ))
-		return TI_NOK;
-
+    
     if ((DB_WLAN(hCmdBld).bJoin) && (DB_TEMP(hCmdBld).ArpRsp.Size != 0))
     {
         return cmdBld_CmdIeConfigureTemplateFrame (hCmdBld, 
@@ -1567,8 +1346,6 @@ static TI_STATUS __cmd_keep_alive_tmpl_join (TI_HANDLE hCmdBld)
     TI_UINT32   index;
     TI_STATUS   status = TI_NOK;
 
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_KEEP_ALIVE_TMPL_JOIN))
-		return TI_NOK;
     /* 
      * config templates 
      * first configure all indexes but the last one with no CB, and than configure the last one 
@@ -1615,9 +1392,6 @@ static TI_STATUS __cmd_keep_alive_params(TI_HANDLE hCmdBld)
 {
     TI_UINT32   index;
     TI_STATUS   status;
-
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_KEEP_ALIVE_PARAMS ))
-		return TI_NOK;
 
     /* config gloabl enable / disable flag */
     cmdBld_CfgKeepAliveEnaDis (hCmdBld, DB_KLV(hCmdBld).enaDisFlag, NULL, NULL);
@@ -1668,21 +1442,15 @@ static TI_STATUS __cmd_keep_alive_params(TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_power_auth (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_POWER_AUTH ))
-		return TI_NOK;
-
-    return cmdBld_CfgIeSleepAuth (hCmdBld, 
-                              DB_WLAN(hCmdBld).minPowerLevel, 
-                              (void *)cmdBld_ConfigSeq, 
+    return cmdBld_CfgIeSleepAuth (hCmdBld,
+                              DB_WLAN(hCmdBld).minPowerLevel,
+                              (void *)cmdBld_ConfigSeq,
                               hCmdBld);
 }
 
 static TI_STATUS __cmd_start_join (TI_HANDLE hCmdBld)
 {
     TCmdBld *pCmdBld = (TCmdBld *)hCmdBld;
-
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_START_JOIN ))
-		return TI_NOK;
 
     if (DB_WLAN(hCmdBld).bJoin)
     {
@@ -1711,9 +1479,6 @@ static TI_STATUS __cmd_start_join (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cmd_sta_state (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CMD_STA_STATE ))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bStaConnected)
     {
         return cmdBld_CmdSetStaState (hCmdBld, 
@@ -1727,10 +1492,7 @@ static TI_STATUS __cmd_sta_state (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_aid (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_AID))
-		return TI_NOK;
-
-	if (DB_WLAN(hCmdBld).bJoin)
+    if (DB_WLAN(hCmdBld).bJoin)
     {
         return cmdBld_CfgAid (hCmdBld, DB_WLAN(hCmdBld).Aid, (void *)cmdBld_ConfigSeq, hCmdBld);
     }
@@ -1741,9 +1503,6 @@ static TI_STATUS __cfg_aid (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_slot_time_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_SLOT_TIME_JOIN ))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin)
     {
         /* Slot time must be setting after doing join */
@@ -1756,9 +1515,6 @@ static TI_STATUS __cfg_slot_time_join (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_preamble_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_PREAMBLE_JOIN ))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin)
     {
         /* Preamble type must be set after doing join */
@@ -1771,9 +1527,6 @@ static TI_STATUS __cfg_preamble_join (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_ht_capabilities (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_HT_CAPABILITIES ))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin && DB_BSS(hCmdBld).bHtCap)
     {
         /* HT capabilities must be set after doing join */
@@ -1792,10 +1545,7 @@ static TI_STATUS __cfg_ht_capabilities (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_ht_information (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_HT_INFORMATION ))
-		return TI_NOK;
-
-	if (DB_WLAN(hCmdBld).bJoin && DB_BSS(hCmdBld).bHtInf)
+    if (DB_WLAN(hCmdBld).bJoin && DB_BSS(hCmdBld).bHtInf)
     {
         /* HT Information must be set after doing join */
         return cmdBld_CfgIeSetFwHtInformation (hCmdBld, 
@@ -1812,13 +1562,9 @@ static TI_STATUS __cfg_ht_information (TI_HANDLE hCmdBld)
 }
 
 
-
 static TI_STATUS __cfg_ba_set_session (TI_HANDLE hCmdBld)
 {
 	TI_STATUS tRes = TI_NOK;
-
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_BA_SET_SESSION))
-		return TI_NOK;
 
     if (DB_WLAN(hCmdBld).bJoin)
     {
@@ -1939,9 +1685,6 @@ static TI_STATUS __cfg_ba_set_session (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_tx_power_join (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_TX_POWER_JOIN ))
-		return TI_NOK;
-
     if (DB_WLAN(hCmdBld).bJoin)
     {
         /* Tx-power must be set after doing join */
@@ -1957,7 +1700,7 @@ static TI_STATUS __cfg_keys (TI_HANDLE hCmdBld)
     TCmdBld   *pCmdBld = (TCmdBld *)hCmdBld;
     TI_UINT32  index;
 
-    if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_KEYS ) || !DB_WLAN(hCmdBld).bJoin)
+    if (!DB_WLAN(hCmdBld).bJoin)
     {
         return TI_NOK;
     }
@@ -2012,10 +1755,7 @@ static TI_STATUS __cfg_keys (TI_HANDLE hCmdBld)
 }
 
 static TI_STATUS __cfg_sg_enable (TI_HANDLE hCmdBld)
-{   
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_SG_ENABLE ))
-		return TI_NOK;
-
+{    
     /* Set the Soft Gemini state */
     return cmdBld_CfgSgEnable (hCmdBld, 
                                DB_WLAN(hCmdBld).SoftGeminiEnable,
@@ -2028,9 +1768,6 @@ static TI_STATUS __cfg_sg (TI_HANDLE hCmdBld)
 {    
     /* Set the Soft Gemini params */
 
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_SG ))
-		return TI_NOK;
-
 	/* signals the FW to config all the paramters from the DB*/
 	DB_WLAN(hCmdBld).SoftGeminiParams.paramIdx = 0xFF;
 
@@ -2042,10 +1779,7 @@ static TI_STATUS __cfg_sg (TI_HANDLE hCmdBld)
 
 
 static TI_STATUS __cfg_fm_coex (TI_HANDLE hCmdBld)
-{    
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_FM_COEX ))
-		return TI_NOK;
-
+{
     /* Set the FM Coexistence params */
     return cmdBld_CfgIeFmCoex (hCmdBld,
                                &DB_WLAN(hCmdBld).tFmCoexParams,
@@ -2056,9 +1790,6 @@ static TI_STATUS __cfg_fm_coex (TI_HANDLE hCmdBld)
 
 static TI_STATUS __cfg_rate_management (TI_HANDLE hCmdBld)
 {
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __CFG_RATE_MANAGEMENT ))
-		return TI_NOK;
-
 	DB_RM(hCmdBld).rateMngParams.paramIndex = (rateAdaptParam_e) 0xFF;
 
 	return cmdBld_CfgIeRateMngDbg(hCmdBld,
@@ -2072,9 +1803,6 @@ static TI_STATUS __cfg_rate_management (TI_HANDLE hCmdBld)
 TI_STATUS __itr_memory_map (TI_HANDLE hCmdBld)
 {
     TCmdBld   *pCmdBld = (TCmdBld *)hCmdBld;
-
-	if (CMD_BLD_IS_INIT_SEQUENCE_CMD_INVALID(hCmdBld, __ITR_MEMORY_MAP ))
-		return TI_NOK;
 
     WLAN_OS_REPORT(("Interrogate TX/RX parameters\n"));
 
@@ -2154,7 +1882,6 @@ static const TCmdCfgFunc aCmdIniSeq [] =
     __cmd_probe_resp_join,
     __cmd_probe_req_join,
     __cmd_null_data_join,
-	__cmd_qos_null_data_join,
     __cmd_disconn_join,
     __cmd_ps_poll_join,
     __cmd_keep_alive_tmpl_join,

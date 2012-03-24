@@ -3,7 +3,7 @@ include $(CLEAR_VARS)
 
 STATIC_LIB ?= y
 DEBUG ?= y
-BUILD_SUPPL = y
+BUILD_SUPPL ?= n
 WPA_ENTERPRISE ?= y
 
 WILINK_ROOT = ../..
@@ -50,7 +50,7 @@ ifeq ($(WPA_ENTERPRISE), y)
 endif
 
 ifeq ($(WPA_SUPPLICANT_VERSION),VER_0_6_X)
-DK_DEFINES += -D SUPPL_WPS_SUPPORT
+	DK_DEFINES += -DSUPPL_WPS_SUPPORT
 endif
 
 #DK_DEFINES += -D NO_WPA_SUPPL
@@ -105,7 +105,7 @@ LOCAL_SHARED_LIBRARIES = \
 	libwpa_client
 endif
 
-LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE:= wlan_cu
+LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_EXECUTABLE)

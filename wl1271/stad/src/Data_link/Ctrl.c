@@ -268,33 +268,10 @@ TI_STATUS ctrlData_getParamBssid(TI_HANDLE hCtrlData, EInternalParam paramVal, T
     if (paramVal == CTRL_DATA_CURRENT_BSSID_PARAM) {
         MAC_COPY (bssid, pCtrlData->ctrlDataCurrentBSSID);
     }
-    else 
-	{
-		TRACE1(pCtrlData->hReport,REPORT_SEVERITY_WARNING,"ctrlData_getParamBssid: invalid parameter %d\n",paramVal);
+    else if (paramVal == CTRL_DATA_MAC_ADDRESS) {
+        TFwInfo *pFwInfo = TWD_GetFWInfo (pCtrlData->hTWD);
+        MAC_COPY (bssid, pFwInfo->macAddress); 
     }
-
-    return TI_OK;
-}
-
-/***************************************************************************
-*                           ctrlData_getParamMacAddr                         *
-****************************************************************************
-* DESCRIPTION:  get a specific parameter related to mac address
-* 
-* INPUTS:       hCtrlData - the object
-*               
-*               
-*       
-* OUTPUT:       bssid
-* 
-* RETURNS:      TI_OK
-*               TI_NOK
-***************************************************************************/
-TI_STATUS ctrlData_getParamMacAddr(TI_HANDLE hCtrlData, TMacAddr bssid)
-{
-    ctrlData_t *pCtrlData = (ctrlData_t *)hCtrlData;
-    TFwInfo *pFwInfo = TWD_GetFWInfo (pCtrlData->hTWD);
-    MAC_COPY (bssid, pFwInfo->macAddress); 
 
     return TI_OK;
 }

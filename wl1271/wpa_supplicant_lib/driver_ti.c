@@ -1,19 +1,25 @@
-/*
- * driver_ti.c
+/* 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * Copyright 2001-2010 Texas Instruments, Inc. - http://www.ti.com/
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include "includes.h"
@@ -35,23 +41,6 @@
 		wpa_printf(MSG_ERROR,"TI: Driver not initialized yet"); \
 		return( r ); \
 	}
-
-#ifdef CONFIG_CONNECTION_SCAN
-/*-----------------------------------------------------------------------------
- * These are global variables, which are used to remember the last connection (periodical)
- * scan parameters, and mark if we need to re-run connection (periodical) scan in the
- * scan stopped event
- * -----------------------------------------------------------------------------*/
-/* this flag marks if the last scan was connection (periodical) scan, so in the SCAN_STOPPED event,
- * if we want to initiate a new scan, we will know if we need to initiate a connection (periodical)
- * scan or not */
-static int g_last_scan_periodical = 0;
-
-/* these global variables holds the information needed to initiate a connection (periodical) scan */
-static void * g_priv = NULL;
-static TPeriodicScanParams g_periodicScanParams;
-
-#endif
 
 /*-----------------------------------------------------------------------------
 Routine Name: check_and_get_build_channels
@@ -221,27 +210,8 @@ int wpa_driver_tista_parse_custom(void *ctx, const void *custom)
 
 			/* Dm: wpa_printf(MSG_INFO,"wpa_supplicant - Link Speed = %u", pStaDrv->link_speed ); */
 			break;
-#ifdef CONFIG_CONNECTION_SCAN
-		case	IPC_EVENT_SCAN_STOPPED:
-			/* if the last scan was a connection (periodical) scan, then we need to re-initiate a connection (periodical) scan*/
-			if (g_last_scan_periodical)
-			{
-				if (g_periodicScanParams.uSsidNum > 0)
-				{
-					int res = wpa_driver_tista_private_send(g_priv, TIWLN_802_11_START_PERIODIC_SCAN_SET,
-								&g_periodicScanParams, sizeof(g_periodicScanParams), NULL, 0);
-					if (0 != res) {
-						wpa_printf(MSG_DEBUG, "Failed to do tista periodical scan in scan stopped!");
-					} else {
-						((struct wpa_supplicant *)(ctx))->scan_ongoing = 0;
-						wpa_printf(MSG_DEBUG, "wpa_driver_tista_periodical_scan success in scan stopped");
-					}
-				}
-			}
-			break;
-#endif
 		default:
-			wpa_printf(MSG_DEBUG, "Unknown event");
+			wpa_printf(MSG_DEBUG, "Unknown event 0x%x", pData->EvParams.uEventType);
 			break;
 	}
 
@@ -298,10 +268,6 @@ static int wpa_driver_tista_scan( void *priv, const u8 *ssid, size_t ssid_len )
 	scan_Params_t scanParams;
 	int scan_type, res, timeout, scan_probe_flag = 0;
 
-#ifdef CONFIG_CONNECTION_SCAN
-	/* mark that the last scan wasn't a connection (periodical) scan */
-	g_last_scan_periodical = 0;
-#endif
 	wpa_printf(MSG_DEBUG, "%s", __func__);
         TI_CHECK_DRIVER( drv->driver_is_loaded, -1 );
 
@@ -333,11 +299,16 @@ static int wpa_driver_tista_scan( void *priv, const u8 *ssid, size_t ssid_len )
 
 	res = wpa_driver_tista_private_send(priv, TIWLN_802_11_START_APP_SCAN_SET, &scanParams, sizeof(scanParams), NULL, 0);
 
-	if (0 != res)
-		wpa_printf(MSG_ERROR, "ERROR - Failed to do tista scan!");
-	else
+	if (0 != res) {
+		if (wpa_s->scanning) {
+			res = 0;
+			wpa_printf(MSG_WARNING, "Already scanning...");
+		} else {
+			wpa_printf(MSG_ERROR, "ERROR - Failed to do tista scan!");
+		}
+	} else {
 		wpa_printf(MSG_DEBUG, "wpa_driver_tista_scan success");
-
+	}
 	timeout = 30;
 	wpa_printf(MSG_DEBUG, "Scan requested (ret=%d) - scan timeout %d sec",
 			res, timeout);
@@ -612,21 +583,27 @@ static int wpa_driver_tista_driver_rx_data_filter_statistics( void *priv,
 	return res;
 }
 
-static int wpa_driver_tista_set_driver_ip(void *priv, u32 ip)
+static int get_num_of_channels(char *country)
 {
-	struct wpa_driver_ti_data *drv = (struct wpa_driver_ti_data *)priv;
-	u32 staIp;
-	int res;
+	int channels = NUMBER_SCAN_CHANNELS_FCC;
 
-	staIp = ip;
-	res = wpa_driver_tista_private_send(priv, SITE_MGR_SET_WLAN_IP_PARAM,
-		&ip, 4, NULL, 0);
-	if (0 != res)
-		wpa_printf(MSG_ERROR, "ERROR - Failed to set driver ip!");
-	else
-		wpa_printf(MSG_DEBUG, "%s success", __func__);
-
-	return res;
+	if (os_strcasecmp(country, "EU"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "FR"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "DE"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "ES"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "IT"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "NL"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "BE"))
+		channels = NUMBER_SCAN_CHANNELS_ETSI;
+	else if (os_strcasecmp(country, "JP"))
+		channels = NUMBER_SCAN_CHANNELS_MKK1;
+	return channels;
 }
 
 /*-----------------------------------------------------------------------------
@@ -689,9 +666,15 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 		ret = 0;
 	}
 	else if( os_strcasecmp(cmd, "scan-active") == 0 ) {
-		wpa_printf(MSG_DEBUG,"Scan Active command");
-		drv->scan_type =  SCAN_TYPE_NORMAL_ACTIVE;
-		ret = 0;
+		if (!drv->suspendopt) {
+			wpa_printf(MSG_DEBUG,"Scan Active command");
+			drv->scan_type =  SCAN_TYPE_NORMAL_ACTIVE;
+			ret = 0;
+		} else {
+			wpa_printf(MSG_DEBUG,"Scan Active command ignored, suspendopt=1");
+			drv->scan_type =  SCAN_TYPE_NORMAL_PASSIVE;
+			ret = 0;
+		}
 	}
 	else if( os_strcasecmp(cmd, "scan-mode") == 0 ) {
 		wpa_printf(MSG_DEBUG,"Scan Mode command");
@@ -707,6 +690,11 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 		drv->link_speed = wpa_s->link_speed / 1000000;
 		ret = sprintf(buf,"LinkSpeed %u\n", drv->link_speed);
 		wpa_printf(MSG_DEBUG, "buf %s", buf);
+	}
+	else if( os_strncasecmp(cmd, "country", 7) == 0 ) {
+		drv->scan_channels = get_num_of_channels(cmd + 8);
+		wpa_printf(MSG_DEBUG, "Country '%s' -> %d channels", cmd, drv->scan_channels);
+		ret = 0;
 	}
 	else if( os_strncasecmp(cmd, "scan-channels", 13) == 0 ) {
 		int noOfChan;
@@ -732,15 +720,20 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 		cur_res = scan_get_by_bssid(drv, wpa_s->bssid);
 		if( cur_res ) {
 			p_ssid = scan_get_ssid(cur_res);
-			if( p_ssid ) {
-				len = (int)(p_ssid->ssid_len);
-				rssi = cur_res->level;
-				if( (len > 0) && (len <= MAX_SSID_LEN) && (len < (int)buf_len)) {
-					os_memcpy((void *)buf, (void *)(p_ssid->ssid), len);
-					ret = len;
-					ret += snprintf(&buf[ret], buf_len-len, " rssi %d\n", rssi);
+			len = (int)(p_ssid->ssid_len);
+			rssi = cur_res->level;
+			if( (len > 0) && (len <= MAX_SSID_LEN) && (len < (int)buf_len)) {
+				os_memcpy((void *)buf, (void *)(p_ssid->ssid), len);
+				ret = len;
+				ret += snprintf(&buf[ret], buf_len-len, " rssi %d\n", rssi);
+				// keep as cache
+				os_memcpy(&drv->last_scan_res, cur_res, sizeof(scan_result_t));
+				if (cur_res->noise == 0) {
+					//noise is not implemented, use diff btw beacon & data
+					drv->last_scan_res.noise = rssi_beacon - rssi_data;
 				}
 			}
+			wpa_printf(MSG_DEBUG,"level=%d, cached=%d", cur_res->level, drv->last_scan_res.level);
 		}
 	}
 #endif
@@ -765,8 +758,16 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 				if( !wpa_s )
 					return( ret );
 				cur_res = scan_get_by_bssid(drv, wpa_s->bssid);
-				if( cur_res )
+				if( cur_res ) {
 					cur_res->level = rssi_beacon;
+					// keep as cache
+					os_memcpy(&drv->last_scan_res, cur_res, sizeof(scan_result_t));
+					if (cur_res->noise == 0) {
+						drv->last_scan_res.noise = rssi_beacon - rssi_data;
+					}
+				} else {
+					drv->last_scan_res.noise = rssi_beacon - rssi_data;
+				}
 			}
 			else
 			{
@@ -879,12 +880,10 @@ static int wpa_driver_tista_driver_cmd( void *priv, char *cmd, char *buf, size_t
 			}
 		}
 	}
-	else if( os_strncasecmp(cmd, "setip",5) == 0 ) {
-		u32 staIp;
-
-		staIp = (u32)atoi(cmd + 5);
-		wpa_printf(MSG_DEBUG,"setip command = %u", staIp);
-		ret = wpa_driver_tista_set_driver_ip( priv, staIp );
+	else if( os_strncasecmp(cmd, "setsuspendopt ", 14) == 0 ) {
+		/* stub to remove errors in ICS */
+		drv->suspendopt = atoi(cmd + 14);
+		ret = 0;
 	}
 	else {
 		wpa_printf(MSG_DEBUG,"Unsupported command");
@@ -1285,7 +1284,7 @@ static struct wpa_scan_results *wpa_driver_tista_get_scan_results(void *priv)
 {
 	struct wpa_driver_ti_data *drv = priv;
 	struct wpa_scan_results *res;
-	struct wpa_scan_res **tmp;
+	scan_result_t **tmp;
 	unsigned ap_num;
 
 	TI_CHECK_DRIVER( drv->driver_is_loaded, NULL );
@@ -1296,12 +1295,12 @@ static struct wpa_scan_results *wpa_driver_tista_get_scan_results(void *priv)
 
 	wpa_printf(MSG_DEBUG, "Actual APs number %d", res->num);
 	ap_num = (unsigned)scan_count(drv) + res->num;
-	tmp = os_realloc(res->res, ap_num * sizeof(struct wpa_scan_res *));
+	tmp = os_realloc(res->res, ap_num * sizeof(scan_result_t *));
 	if (tmp == NULL)
 		return res;
 	res->num = scan_merge(drv, tmp, drv->force_merge_flag, res->num, ap_num);
 	wpa_printf(MSG_DEBUG, "After merge, APs number %d", res->num);
-	tmp = os_realloc(tmp, res->num * sizeof(struct wpa_scan_res *));
+	tmp = os_realloc(tmp, res->num * sizeof(scan_result_t *));
 	res->res = tmp;
 	return res;
 }
@@ -1322,14 +1321,14 @@ Compare function for sorting scan results. Return >0 if @b is considered better.
 -----------------------------------------------------------------------------*/
 static int wpa_driver_tista_scan_result_compare(const void *a, const void *b)
 {
-	const struct wpa_scan_result *wa = a;
-	const struct wpa_scan_result *wb = b;
+	const scan_result_t *wa = a;
+	const scan_result_t *wb = b;
 
 	return( wb->level - wa->level );
 }
 
 static int wpa_driver_tista_get_scan_results(void *priv,
-					      struct wpa_scan_result *results,
+					      scan_result_t* results,
 					      size_t max_size)
 {
 	struct wpa_driver_ti_data *drv = priv;
@@ -1345,7 +1344,7 @@ static int wpa_driver_tista_get_scan_results(void *priv,
 	/* Merge new results with previous */
         ap_num = scan_merge(drv, results, drv->force_merge_flag, ap_num, max_size);
 	wpa_printf(MSG_DEBUG, "After merge, APs number %d", ap_num);
-	qsort(results, ap_num, sizeof(struct wpa_scan_result),
+	qsort(results, ap_num, sizeof(scan_result_t),
 		wpa_driver_tista_scan_result_compare);
 	return ap_num;
 }
@@ -1454,185 +1453,49 @@ static int wpa_driver_tista_set_operstate(void *priv, int state)
 	return wpa_driver_wext_set_operstate(drv->wext, state);
 }
 
-#ifdef CONFIG_CONNECTION_SCAN
-
-static void init_connection_scan_params(TPeriodicScanParams * periodicScanParams, struct wpa_ssid * pssid, int scan_req )
+// backport from wpa supplicant 8
+#ifdef WPA_SUPPL_WITH_SIGNAL_POLL
+#define RSSI_CMD      "RSSI"
+#define LINKSPEED_CMD "LINKSPEED"
+int wpa_driver_tista_signal_poll(void *priv, struct wpa_signal_info *si)
 {
-	wpa_printf(MSG_DEBUG, "wpa_driveinit_connection_scan_params");
-        unsigned int i;
-	int curr_ssid_index = 0;
-	struct wpa_ssid * curr_ssid = NULL;
-	int max_configured_ssid_num = 0, ssids_configured_count = 0;
-
-	periodicScanParams->uSsidNum = 0;
-	periodicScanParams->uSsidListFilterEnabled = 0;
-
-	/* Set the cycles number and termination report according to the initiator */
-	if (scan_req == 2)
-	{
-		/* initiator is Ctrlf (GUI) */
-		periodicScanParams->uCycleNum = 3;
-		periodicScanParams->bTerminateOnReport = FALSE;
-	} else {
-		/* initiator is supplicant */
-		periodicScanParams->uCycleNum = 0; // infinite
-		periodicScanParams->bTerminateOnReport = TRUE;
-	}
-
-	/* Set cycle intervals */
-	periodicScanParams->uCycleIntervalMsec[0] = 0;
-	for (i = 1; i < PERIODIC_SCAN_MAX_INTERVAL_NUM; i++)
-	{
-		/* set the cycle intervals according to the scan initiator.
-		 * If we are in a GUI initiated scan - then we should be quick, so
-		 * set cycle intervals to be 0, otherwise set the regular cycles */
-		if (scan_req == 2)
-		{
-			/* initiator is Ctrlf (GUI) */
-			periodicScanParams->uCycleIntervalMsec[i] = 0;
-		} else {
-			/* initiator is supplicant */
-			periodicScanParams->uCycleIntervalMsec[i] = i*500;
-		}
-	}
-
-	/* set threshold and other parameters */
-	periodicScanParams->iRssiThreshold = -97;
-	periodicScanParams->iSnrThreshold = 0;
-	periodicScanParams->uFrameCountReportThreshold = 1;
-	periodicScanParams->eBssType = BSS_ANY;
-	periodicScanParams->uProbeRequestNum = 2;
-
-	/* set channels */
-	periodicScanParams->uChannelNum = NUMBER_SCAN_CHANNELS_FCC;
-	for (i = 0; i < periodicScanParams->uChannelNum; i++)
-	{
-		periodicScanParams->tChannels[i].eBand = RADIO_BAND_2_4_GHZ;
-		periodicScanParams->tChannels[i].uChannel = i + 1;
-		periodicScanParams->tChannels[i].eScanType = SCAN_TYPE_NORMAL_ACTIVE;
-		periodicScanParams->tChannels[i].uMinDwellTimeMs = 20;
-		periodicScanParams->tChannels[i].uMaxDwellTimeMs = 30;
-		periodicScanParams->tChannels[i].uTxPowerLevelDbm = DEF_TX_POWER;
-	}
-
-	/* fill the list of SSIDs to search for */
-	curr_ssid_index = 0;
-	curr_ssid = pssid;
-
-	/* If the initiator is Ctrlf (GUI) - then add the broadcast SSID search */
-	if (scan_req == 2)
-	{
-		periodicScanParams->tDesiredSsid[ curr_ssid_index ].eVisability = SCAN_SSID_VISABILITY_PUBLIC;
-		periodicScanParams->tDesiredSsid[ curr_ssid_index ].tSsid.len = 0;
-		curr_ssid_index++;
-	}
-
-	/* we want to configure maximum number of 5 SSIDs */
-	max_configured_ssid_num = 5;
-
-	/* Fill the list of perffered ssids */
-	ssids_configured_count = 0;
-	while (ssids_configured_count < max_configured_ssid_num && curr_ssid != NULL)
-	{
-		/* --- */
-		/* add a new preffered ssid */
-		/* --- */
-		if (!curr_ssid->disabled)
-                {
-			/* set the SSID visaibility */
-			if (curr_ssid->scan_ssid == 1)
-				periodicScanParams->tDesiredSsid[ curr_ssid_index ].eVisability = SCAN_SSID_VISABILITY_HIDDEN;
-			else
-				periodicScanParams->tDesiredSsid[ curr_ssid_index ].eVisability = SCAN_SSID_VISABILITY_PUBLIC;
-
-			/* set the ssid name */
-			periodicScanParams->tDesiredSsid[ curr_ssid_index ].tSsid.len = curr_ssid->ssid_len;
-			memcpy(	periodicScanParams->tDesiredSsid[ curr_ssid_index].tSsid.str, 
-				curr_ssid->ssid,
-				periodicScanParams->tDesiredSsid[ curr_ssid_index ].tSsid.len);
-
-			/* inc the number of SSIDs which we already configured */
-			ssids_configured_count++;
-
-			/* advance to the next ssid */
-			curr_ssid_index++;
-		}
-		curr_ssid = curr_ssid->next;
-	}
-
-	/* Update the number of preffered ssids according to what we filled earlier */
-	periodicScanParams->uSsidNum = curr_ssid_index;
-}
-
-/*-----------------------------------------------------------------------------
- * Routine Name: wpa_driver_tista_connection_scan
- * Routine Description: request connection (periodical) scan from driver
- * Arguments: 
- *  priv - pointer to private data structure
- *  pssid: the head of the preffered ssid list
- *  scan_req: the scan request initiator: 2=Ctrlf (GUI), other=supplicant
- *  Return Value: 0 on success, -1 on failure
- * -----------------------------------------------------------------------------*/
-static int wpa_driver_tista_connection_scan( void *priv, struct wpa_ssid * pssid, int scan_req )
-{
-	wpa_printf(MSG_DEBUG, "wpa_driver_tista_connection_scan");
-
-        struct wpa_driver_ti_data *drv = (struct wpa_driver_ti_data *)priv;
+	char buf[MAX_DRV_CMD_SIZE];
+	struct wpa_driver_ti_data *drv = priv;
 	struct wpa_supplicant *wpa_s = (struct wpa_supplicant *)(drv->ctx);
-	struct wpa_ssid *issid;
-	int i;
-	int scan_type, res, scan_probe_flag = 0;
+	scan_result_t *cur_res;
+	char *prssi;
+	int res;
 
-	/* zero the scan req (for next scan). This is the same logic used in the regular scan... */
-	wpa_s->scan_req = 0;
+	os_memset(si, 0, sizeof(*si));
+	res = wpa_driver_tista_driver_cmd(priv, RSSI_CMD, buf, sizeof(buf));
+	/* Answer: SSID rssi -Val */
+	if (res < 0)
+		return res;
+	prssi = strcasestr(buf, RSSI_CMD);
+	if (!prssi)
+		return -1;
 
-	/* mark that the last scan was a periodical scan */
-	g_last_scan_periodical = 1;
+	si->current_signal = atoi(prssi + strlen(RSSI_CMD) + 1);
 
-	/* --- */
-	/* Step 1: Stop the last periodical scan (if there is any) */
-	/* --- */
-	res = wpa_driver_tista_private_send(priv, TIWLN_802_11_STOP_PERIODIC_SCAN_SET, NULL, 0, NULL, 0);
-	if (0 != res)
-		wpa_printf(MSG_DEBUG, "ERROR - Failed to stop the periodical scan!");
-	else
-		wpa_printf(MSG_DEBUG, "succeeded in stopping the last periodical scan");
-	
-	/* --- */
-	/* Step 2: Initialize periodic scan parameters (use the global variable: 'g_periodicScanParams') */
-	/* --- */
-	os_memset(&g_periodicScanParams, 0, sizeof(g_periodicScanParams));
-	init_connection_scan_params(&g_periodicScanParams, pssid, scan_req);
-	
-	/* save the last scan  type */
-	scan_type = drv->scan_type;
-	drv->last_scan = scan_type; /* Remember scan type for last scan */
-
-	/* save it, in case we will want to re-initiate the scan later */
-	g_priv = priv;
-
-	/* --- */
-	/* Step 3: Perform the actual periodical scan */
-	/* --- */
-	if (g_periodicScanParams.uSsidNum > 0)
-	{
-		res = wpa_driver_tista_private_send(priv, TIWLN_802_11_START_PERIODIC_SCAN_SET, &g_periodicScanParams, sizeof(g_periodicScanParams), NULL, 0);
-		if (0 != res) {
-			wpa_printf(MSG_DEBUG, "Failed to do tista periodical scan!");
-
-			/* if we failed to perform the periodical scan, it's probably because the stop for the previous scan wasn't completed yet... so,
-			 * since on the SCAN_STOPPED event we always try to run a periodical scan, then we can be sure that the scan will be initiated later,
-			 * even if we failed to initiate it now */
+	if (wpa_s) {
+		si->current_txrate = wpa_s->link_speed / 1000;
+		cur_res = scan_get_by_bssid(drv, wpa_s->bssid);
+		if( cur_res && cur_res->freq ) {
+			si->frequency      = cur_res->freq;
+			si->current_signal = cur_res->level;
 		} else {
-			wpa_s->scan_ongoing = 0;
-			wpa_printf(MSG_DEBUG, "wpa_driver_tista_periodical_scan success");
+			si->frequency      = drv->last_scan_res.freq;
+		}
+		si->current_noise = drv->last_scan_res.noise;
+		if (si->current_noise < 0) {
+			si->current_noise = 0 - si->current_noise;
 		}
 	}
 
 	return 0;
 }
-
 #endif
+
 
 const struct wpa_driver_ops wpa_driver_custom_ops = {
 	.name = TIWLAN_DRV_NAME,
@@ -1644,12 +1507,9 @@ const struct wpa_driver_ops wpa_driver_custom_ops = {
 	.set_countermeasures = wpa_driver_tista_set_countermeasures,
 	.set_drop_unencrypted = wpa_driver_tista_set_drop_unencrypted,
 	.scan = wpa_driver_tista_scan,
-#ifdef CONFIG_CONNECTION_SCAN
-	/* connection (periodical) scan */
-	.connect_scan = wpa_driver_tista_connection_scan,
-#endif
 #ifdef WPA_SUPPLICANT_VER_0_6_X
 	.get_scan_results2 = wpa_driver_tista_get_scan_results,
+	.combo_scan = NULL,
 #else
 	.get_scan_results = wpa_driver_tista_get_scan_results,
 #endif
@@ -1668,5 +1528,8 @@ const struct wpa_driver_ops wpa_driver_custom_ops = {
 	.set_mode = wpa_driver_tista_set_mode,
 	.set_probe_req_ie = wpa_driver_tista_set_probe_req_ie,
 #endif
-	.driver_cmd = wpa_driver_tista_driver_cmd
+	.driver_cmd = wpa_driver_tista_driver_cmd,
+#ifdef WPA_SUPPL_WITH_SIGNAL_POLL
+	.signal_poll = wpa_driver_tista_signal_poll,
+#endif
 };

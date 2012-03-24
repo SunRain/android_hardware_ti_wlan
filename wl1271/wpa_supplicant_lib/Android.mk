@@ -15,10 +15,6 @@
 #
 LOCAL_PATH := $(call my-dir)
 
-ifeq ($(TARGET_SIMULATOR),true)
-  $(error This makefile must not be included when building the simulator)
-endif
-
 ifndef WPA_SUPPLICANT_VERSION
 WPA_SUPPLICANT_VERSION := VER_0_5_X
 endif
@@ -67,14 +63,11 @@ INCLUDES = $(STAD)/Export_Inc \
 	$(DK_ROOT)/../lib
   
 L_CFLAGS = -DCONFIG_DRIVER_CUSTOM -DHOST_COMPILE -D__BYTE_ORDER_LITTLE_ENDIAN
-#L_CFLAGS += -DCONFIG_CONNECTION_SCAN
 L_CFLAGS += -DWPA_SUPPLICANT_$(WPA_SUPPLICANT_VERSION)
 OBJS = driver_ti.c $(LIB)/scanmerge.c $(LIB)/shlist.c
 
 # To force sizeof(enum) = 4
-ifneq ($(TARGET_SIMULATOR),true)
 L_CFLAGS += -mabi=aapcs-linux
-endif
 
 ifdef CONFIG_NO_STDOUT_DEBUG
 L_CFLAGS += -DCONFIG_NO_STDOUT_DEBUG
@@ -101,11 +94,16 @@ ifeq ($(WPA_SUPPL_APPROX_USE_RSSI),true)
 L_CFLAGS += -DAPPROX_USE_RSSI_COMMAND
 endif
 
+# backport from WPA supplicant 8
+ifeq ($(WPA_SUPPL_WITH_SIGNAL_POLL),true)
+L_CFLAGS += -DWPA_SUPPL_WITH_SIGNAL_POLL
+endif
+
 ########################
  
 include $(CLEAR_VARS)
-LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE := libCustomWifi
+LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := libc libcutils
 LOCAL_CFLAGS := $(L_CFLAGS)
 LOCAL_SRC_FILES := $(OBJS)

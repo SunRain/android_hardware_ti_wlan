@@ -314,9 +314,6 @@ ETxnStatus busDrv_Transact (TI_HANDLE hBusDrv, TTxnStruct *pTxn)
     pBusDrv->uCurrTxnPartsCount     = 0;
     pBusDrv->uCurrTxnPartsCountSync = 0;
 
-    /* Set status OK in Txn struct (changed later to error if transaction fails) */
-    TXN_PARAM_SET_STATUS(pTxn, TXN_PARAM_STATUS_OK);
-
     /* Prepare the transaction parts in a table. */
     bWithinAggregation = busDrv_PrepareTxnParts (pBusDrv, pTxn);
 
@@ -582,7 +579,8 @@ static void busDrv_SendTxnParts (TBusDrvObj *pBusDrv)
         }
     }
 
-    /* If not fully sync, call TxnDone CB */
+    /* Set status OK in Txn struct, and call TxnDone CB if not fully sync */
+    TXN_PARAM_SET_STATUS(pTxn, TXN_PARAM_STATUS_OK);
     if (pBusDrv->uCurrTxnPartsCountSync != pBusDrv->uCurrTxnPartsCount)
     {
         pBusDrv->fTxnDoneCb (pBusDrv->hCbHandle, pTxn);

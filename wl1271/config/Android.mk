@@ -18,18 +18,8 @@ LOCAL_PATH := $(call my-dir)
 ########################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := wpa_supplicant.conf
-LOCAL_MODULE_TAGS := eng
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/wifi
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
-
-########################
-
-include $(CLEAR_VARS)
 LOCAL_MODULE := tiwlan.ini
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/wifi
 LOCAL_SRC_FILES := $(LOCAL_MODULE)
@@ -39,10 +29,19 @@ include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := dhcpcd.conf
-LOCAL_MODULE_TAGS := eng
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/dhcpcd
 LOCAL_SRC_FILES := android_dhcpcd.conf
 include $(BUILD_PREBUILT)
+
+########################
+
+WIFI_DRIVER_SOCKET_IFACE := tiwlan0
+ifeq ($(strip $(WPA_SUPPLICANT_VERSION)),VER_0_6_X)
+  include external/wpa_supplicant_6/wpa_supplicant/wpa_supplicant_conf.mk
+else
+  include external/wpa_supplicant/wpa_supplicant_conf.mk
+endif
 
 ########################

@@ -406,7 +406,7 @@ TI_STATUS siteMgr_SetDefaults (TI_HANDLE                hSiteMgr,
     os_memoryCopy(pSiteMgr->hOs, (void *)&(pSiteMgr->ibssBssid[2]), &timestamp, sizeof(TI_UINT32));
 
     /* Get the Source MAC address in order to use it for AD-Hoc BSSID, solving Conexant ST issue for WiFi test */
-    status = ctrlData_getParamMacAddr(pSiteMgr->hCtrlData, saBssid);
+    status = ctrlData_getParamBssid(pSiteMgr->hCtrlData, CTRL_DATA_MAC_ADDRESS, saBssid);
     if (status != TI_OK)
     {
         TRACE0(pSiteMgr->hReport, REPORT_SEVERITY_CONSOLE ,"\n ERROR !!! : siteMgr_config - Error in getting MAC address\n" );
@@ -606,6 +606,8 @@ TI_STATUS siteMgr_setParam(TI_HANDLE        hSiteMgr,
     TI_UINT32      channel;
     ESlotTime  slotTime;
     paramInfo_t	param;
+    PowerMgr_t *pPowerMgr = (PowerMgr_t*)pSiteMgr->hPowerMgr;
+    static PowerMgr_PowerMode_e desiredPowerModeProfile;
 
     switch(pParam->paramType)
     {
@@ -726,12 +728,14 @@ TI_STATUS siteMgr_setParam(TI_HANDLE        hSiteMgr,
            	param.content.rsnWPAPromoteFlags = ADMCTRL_WPA_OPTION_ENABLE_PROMOTE_AUTH_MODE;
            	rsn_setParam(pSiteMgr->hRsn, &param);
 
-			/*change Power manager priotiy to support Active WPS*/
-            param.paramType = POWER_MGR_ENABLE_PRIORITY;
-            param.content.powerMngPriority = POWER_MANAGER_WPS_PRIORITY;
+            /*
+		     * Set the system to Active power save
+             */
+            desiredPowerModeProfile = pPowerMgr->desiredPowerModeProfile;
+            param.paramType = POWER_MGR_POWER_MODE;
+            param.content.powerMngPowerMode.PowerMode = POWER_MODE_ACTIVE;
+            param.content.powerMngPowerMode.PowerMngPriority = POWER_MANAGER_USER_PRIORITY;
             powerMgr_setParam(pSiteMgr->hPowerMgr,&param);
-
-
         }
 		else
 		{
@@ -739,11 +743,13 @@ TI_STATUS siteMgr_setParam(TI_HANDLE        hSiteMgr,
            	param.content.rsnWPAPromoteFlags = ADMCTRL_WPA_OPTION_NONE;
            	rsn_setParam(pSiteMgr->hRsn, &param);
 
-			/*change Back Power manager priotiy to support Active WPS*/
-			param.paramType = POWER_MGR_DISABLE_PRIORITY;
-			param.content.powerMngPriority = POWER_MANAGER_WPS_PRIORITY;
-			powerMgr_setParam(pSiteMgr->hPowerMgr,&param);
-
+            /* 
+             * Set the system to last power mode
+             */
+            param.paramType = POWER_MGR_POWER_MODE;
+            param.content.powerMngPowerMode.PowerMode = desiredPowerModeProfile;
+            param.content.powerMngPowerMode.PowerMngPriority = POWER_MANAGER_USER_PRIORITY;
+            powerMgr_setParam(pSiteMgr->hPowerMgr,&param);
 		}
 
         /* Update the FW prob request templates to reflect the new WSC state */
@@ -1466,7 +1472,6 @@ TI_STATUS siteMgr_getParam(TI_HANDLE        hSiteMgr,
            }
        }
        break;
-
     case SITE_MGRT_GET_RATE_MANAGMENT:
          return cmdBld_ItrRateParams (pSiteMgr->hTWD,
                                       pParam->content.interogateCmdCBParams.fCb,
@@ -2672,14 +2677,14 @@ static void updateRates(siteMgr_t *pSiteMgr, siteEntry_t *pSite, mlmeFrameInfo_t
         return;
     }
 
-	    /* Update the rate elements */
-    maxBasicRate = (TI_UINT8)rate_GetMaxBasicFromStr ((TI_UINT8 *)pFrameInfo->content.iePacket.pRates->rates,pFrameInfo->content.iePacket.pRates->hdr[1], (ENetRate)maxBasicRate);
-    maxActiveRate = (TI_UINT8)rate_GetMaxActiveFromStr ((TI_UINT8 *)pFrameInfo->content.iePacket.pRates->rates,pFrameInfo->content.iePacket.pRates->hdr[1], (ENetRate)maxActiveRate);
+    /* Update the rate elements */
+    maxBasicRate = rate_GetMaxBasicFromStr ((TI_UINT8 *)pFrameInfo->content.iePacket.pRates->rates,pFrameInfo->content.iePacket.pRates->hdr[1], maxBasicRate);
+    maxActiveRate = rate_GetMaxActiveFromStr ((TI_UINT8 *)pFrameInfo->content.iePacket.pRates->rates,pFrameInfo->content.iePacket.pRates->hdr[1], maxActiveRate);
 
     if(pFrameInfo->content.iePacket.pExtRates)
     {
-        maxBasicRate = (TI_UINT8)rate_GetMaxBasicFromStr ((TI_UINT8 *)pFrameInfo->content.iePacket.pExtRates->rates,pFrameInfo->content.iePacket.pExtRates->hdr[1], (ENetRate)maxBasicRate);
-        maxActiveRate = (TI_UINT8)rate_GetMaxActiveFromStr ((TI_UINT8 *)pFrameInfo->content.iePacket.pExtRates->rates,pFrameInfo->content.iePacket.pExtRates->hdr[1], (ENetRate)maxActiveRate);
+        maxBasicRate = rate_GetMaxBasicFromStr ((TI_UINT8 *)pFrameInfo->content.iePacket.pExtRates->rates,pFrameInfo->content.iePacket.pExtRates->hdr[1], maxBasicRate);
+        maxActiveRate = rate_GetMaxActiveFromStr ((TI_UINT8 *)pFrameInfo->content.iePacket.pExtRates->rates,pFrameInfo->content.iePacket.pExtRates->hdr[1], maxActiveRate);
     }
 
 
@@ -3602,6 +3607,7 @@ TI_BOOL siteMgr_SelectRateMatch (TI_HANDLE hSiteMgr, TSiteEntry *pCurrentSite)
 {
     siteMgr_t *pSiteMgr = (siteMgr_t *)hSiteMgr;
 	TI_UINT32 StaTotalRates;
+	TI_UINT32 SiteTotalRates;
 
 	/* If the basic or active rate are invalid (0), return NO_MATCH. */
 	if ((pCurrentSite->maxBasicRate == DRV_RATE_INVALID) || (pCurrentSite->maxActiveRate == DRV_RATE_INVALID)) 
@@ -3624,6 +3630,8 @@ TI_BOOL siteMgr_SelectRateMatch (TI_HANDLE hSiteMgr, TSiteEntry *pCurrentSite)
 	StaTotalRates = pSiteMgr->pDesiredParams->siteMgrCurrentDesiredRateMask.basicRateMask |
 				    pSiteMgr->pDesiredParams->siteMgrCurrentDesiredRateMask.supportedRateMask;
 
+	SiteTotalRates = pCurrentSite->rateMask.basicRateMask | pCurrentSite->rateMask.supportedRateMask;
+    
     if ((StaTotalRates & pCurrentSite->rateMask.basicRateMask) != pCurrentSite->rateMask.basicRateMask)
     {
         TRACE0(pSiteMgr->hReport, REPORT_SEVERITY_INFORMATION, "siteMgr_SelectRateMatch: Basic or Supported Rates Doesn't Match \n");
@@ -3670,7 +3678,7 @@ void siteMgr_bandParamsConfig(TI_HANDLE hSiteMgr,  TI_BOOL updateToOS)
 void siteMgr_ConfigRate(TI_HANDLE hSiteMgr)
 {
     siteMgr_t   *pSiteMgr = (siteMgr_t *)hSiteMgr;
-    TI_BOOL      dot11a;
+    TI_BOOL      dot11a, b11nEnable;
     EDot11Mode   OperationMode;
 
     OperationMode = pSiteMgr->siteMgrOperationalMode;
@@ -3707,16 +3715,20 @@ void siteMgr_ConfigRate(TI_HANDLE hSiteMgr)
     /* use HT MCS rates */
     if (pSiteMgr->pDesiredParams->siteMgrDesiredBSSType == BSS_INFRASTRUCTURE)
 	{
+		b11nEnable = TI_TRUE;
 		OperationMode = DOT11_N_MODE;
 	}
-	
+	else
+	{
+		b11nEnable = TI_FALSE;
+	}
     
 
     pSiteMgr->pDesiredParams->siteMgrRegstryBasicRateMask =
         rate_BasicToDrvBitmap ((EBasicRateSet)(pSiteMgr->pDesiredParams->siteMgrRegstryBasicRate[OperationMode]), dot11a);
 
     pSiteMgr->pDesiredParams->siteMgrRegstrySuppRateMask =
-        rate_SupportedToDrvBitmap ((ESupportedRateSet)(pSiteMgr->pDesiredParams->siteMgrRegstrySuppRate[OperationMode]), dot11a);
+        rate_SupportedToDrvBitmap ((EBasicRateSet)(pSiteMgr->pDesiredParams->siteMgrRegstrySuppRate[OperationMode]), dot11a);
 
     siteMgr_updateRates(pSiteMgr, dot11a, TI_TRUE);
 

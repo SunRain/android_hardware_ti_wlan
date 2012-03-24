@@ -246,10 +246,7 @@
                                      (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24))
 
 
-/**********************************************************
-         Big Endian Host Macros (NOT our default)
-**********************************************************/
-
+/* TI always supports Little Endian */
 #if defined (__BYTE_ORDER_BIG_ENDIAN)
 
 #define WLANTOHL(x)                 (x)
@@ -262,13 +259,6 @@
 
 #define INT64_LOWER(x)              *(((TI_UINT32*)&(x))+1)
 #define INT64_HIGHER(x)             *((TI_UINT32*)&(x))
-
-#define COPY_BIG_END_WORD(dst,src)  ((TI_UINT8 *)(dst))[0] = ((TI_UINT8 *)(src))[0]; \
-                                    ((TI_UINT8 *)(dst))[1] = ((TI_UINT8 *)(src))[1]
-#define COPY_BIG_END_LONG(dst,src)  ((TI_UINT8 *)(dst))[0] = ((TI_UINT8 *)(src))[0]; \
-                                    ((TI_UINT8 *)(dst))[1] = ((TI_UINT8 *)(src))[1]; \
-                                    ((TI_UINT8 *)(dst))[2] = ((TI_UINT8 *)(src))[2]; \
-                                    ((TI_UINT8 *)(dst))[3] = ((TI_UINT8 *)(src))[3]
 
 #define COPY_WLAN_WORD(dst,src)     ((TI_UINT8 *)(dst))[0] = ((TI_UINT8 *)(src))[1]; \
                                     ((TI_UINT8 *)(dst))[1] = ((TI_UINT8 *)(src))[0]
@@ -285,83 +275,63 @@
                                     ((TI_UINT8 *)(dst))[1] = ((val) >> 16) & 0xff; \
                                     ((TI_UINT8 *)(dst))[0] = ((val) >> 24) & 0xff
 
-#define GET_WLAN_WORD(src)          ((((TI_UINT8 *)(src))[1]) | (((TI_UINT8 *)(src))[0] << 8))
-#define GET_WLAN_LONG(src)          ((((TI_UINT8 *)(src))[3]) | (((TI_UINT8 *)(src))[2] << 8) | (((TI_UINT8 *)(src))[1] << 16) | (((TI_UINT8 *)(src))[0] << 24))
-
-
-/***********************************************************
-          Little Endian Host Macros (our default)
-***********************************************************/
+#define WLAN_WORD(src)              (((TI_UINT8 *)(src))[1]) | (((TI_UINT8 *)(src))[0] << 8)
+#define WLAN_LONG(src)              (((TI_UINT8 *)(src))[3]) | (((TI_UINT8 *)(src))[2] << 8) | (((TI_UINT8 *)(src))[1] << 16) | (((TI_UINT8 *)(src))[0] << 24)
 
 #elif defined (__BYTE_ORDER_LITTLE_ENDIAN)
 
 /**
  * \def WLANTOHL
- * \brief  Handle endianness of Long in Little Endian host when opposing Big Endian data - swap bytes
+ * \brief Macro which performs bytes swap of Long in Little Endian
  */
 #define WLANTOHL(x)                 BYTE_SWAP_LONG (x)
 /**
  * \def WLANTOHS
- * \brief  Handle endianness of Word in Little Endian host when opposing Big Endian data - swap bytes
+ * \brief Macro which performs bytes swap of Word in Little Endian
  */
 #define WLANTOHS(x)                 BYTE_SWAP_WORD (x)
 /**
  * \def HTOWLANL
- * \brief  Handle endianness of Long in Little Endian host when opposing Big Endian data - swap bytes
+ * \brief Macro which performs bytes swap of Long in Little Endian
  */
 #define HTOWLANL(x)                 BYTE_SWAP_LONG (x)
 /**
- * \def HTOWLANS
- * \brief  Handle endianness of Word in Little Endian host when opposing Big Endian data - swap bytes
+ * \def HTOWLANL
+ * \brief Macro which performs bytes swap of Word in Little Endian
  */
 #define HTOWLANS(x)                 BYTE_SWAP_WORD (x)
 
 /**
  * \def ENDIAN_HANDLE_WORD
- * \brief  Handle endianness of Word in Little Endian host when opposing Little Endian data - do nothing
+ * \brief Macro which handles Word in Little Endian 
  */
 #define ENDIAN_HANDLE_WORD(x)       (x)
 /**
- * \def ENDIAN_HANDLE_LONG
- * \brief  Handle endianness of Long in Little Endian host when opposing Little Endian data - do nothing
+ * \def ENDIAN_HANDLE_WORD
+ * \brief Macro which handles Long in Little Endian 
  */
 #define ENDIAN_HANDLE_LONG(x)       (x)
 
 /**
  * \def INT64_HIGHER
- * \brief Macro which returns the content of higher address of INT64 variable in Little Endian host
+ * \brief Macro which returns the content of higher address of INT64 variable in Little Endian
  */
 #define INT64_HIGHER(x)             *(((TI_UINT32*)&(x))+1)
 /**
  * \def INT64_LOWER
- * \brief Macro which returns the content of lower address of INT64 variable in Little Endian host
+ * \brief Macro which returns the content of lower address of INT64 variable in Little Endian
  */
 #define INT64_LOWER(x)              *((TI_UINT32*)&(x))
 
 /**
- * \def COPY_BIG_END_WORD
- * \brief  Copy Word byte by byte in Little Endian host when opposing Big Endian data - swap bytes
- */
-#define COPY_BIG_END_WORD(dst,src)  ((TI_UINT8 *)(dst))[0] = ((TI_UINT8 *)(src))[1]; \
-                                    ((TI_UINT8 *)(dst))[1] = ((TI_UINT8 *)(src))[0]
-/**
- * \def COPY_BIG_END_LONG
- * \brief  Copy Long byte by byte in Little Endian host when opposing Big Endian data - swap bytes
- */
-#define COPY_BIG_END_LONG(dst,src)  ((TI_UINT8 *)(dst))[0] = ((TI_UINT8 *)(src))[3]; \
-                                    ((TI_UINT8 *)(dst))[1] = ((TI_UINT8 *)(src))[2]; \
-                                    ((TI_UINT8 *)(dst))[2] = ((TI_UINT8 *)(src))[1]; \
-                                    ((TI_UINT8 *)(dst))[3] = ((TI_UINT8 *)(src))[0]
-
-/**
  * \def COPY_WLAN_WORD
- * \brief  Copy Word byte by byte in Little Endian host when opposing Little Endian data - don't swap bytes
+ * \brief Macro which copies word source to word destination byte by byte in Little Endian
  */
 #define COPY_WLAN_WORD(dst,src)     ((TI_UINT8 *)(dst))[0] = ((TI_UINT8 *)(src))[0]; \
                                     ((TI_UINT8 *)(dst))[1] = ((TI_UINT8 *)(src))[1]
 /**
  * \def COPY_WLAN_LONG
- * \brief  Copy Long byte by byte in Little Endian host when opposing Little Endian data - don't swap bytes
+ * \brief Macro which copies long source to long destination byte by byte in Little Endian
  */
 #define COPY_WLAN_LONG(dst,src)     ((TI_UINT8 *)(dst))[0] = ((TI_UINT8 *)(src))[0]; \
                                     ((TI_UINT8 *)(dst))[1] = ((TI_UINT8 *)(src))[1]; \
@@ -369,30 +339,28 @@
                                     ((TI_UINT8 *)(dst))[3] = ((TI_UINT8 *)(src))[3]
 /**
  * \def SET_WLAN_WORD
- * \brief  Same as COPY_WLAN_WORD, but the source is given by value and not address
+ * \brief Macro which copies Word from val source to desrination in Little Endian
  */
 #define SET_WLAN_WORD(dst,val)      ((TI_UINT8 *)(dst))[0] =  (val)        & 0xff; \
                                     ((TI_UINT8 *)(dst))[1] = ((val) >> 8)  & 0xff
 /**
  * \def SET_WLAN_LONG
- * \brief  Same as COPY_WLAN_LONG, but the source is given by value and not address
+ * \brief Macro which copies Long from val source to desrination in Little Endian
  */
 #define SET_WLAN_LONG(dst,val)      ((TI_UINT8 *)(dst))[0] =  (val)        & 0xff; \
                                     ((TI_UINT8 *)(dst))[1] = ((val) >> 8)  & 0xff; \
                                     ((TI_UINT8 *)(dst))[2] = ((val) >> 16) & 0xff; \
                                     ((TI_UINT8 *)(dst))[3] = ((val) >> 24) & 0xff
 /**
- * \def GET_WLAN_WORD
- * \brief  Return Word value from source address in Little Endian host
+ * \def WLAN_WORD
+ * \brief Macro which returns Word value from source address in Little Endian
  */
-#define GET_WLAN_WORD(src)          ((((TI_UINT8 *)(src))[0]) | (((TI_UINT8 *)(src))[1] << 8))
+#define WLAN_WORD(src)              (((TI_UINT8 *)(src))[0]) | (((TI_UINT8 *)(src))[1] << 8)
 /**
- * \def GET_WLAN_LONG
- * \brief  Return Long value from source address in Little Endian host
+ * \def WLAN_LONG
+ * \brief Macro which returns Long value from source address in Little Endian
  */
-#define GET_WLAN_LONG(src)          ((((TI_UINT8 *)(src))[0]) | (((TI_UINT8 *)(src))[1] << 8) | (((TI_UINT8 *)(src))[2] << 16) | (((TI_UINT8 *)(src))[3] << 24))
-
-
+#define WLAN_LONG(src)              (((TI_UINT8 *)(src))[0]) | (((TI_UINT8 *)(src))[1] << 8) | (((TI_UINT8 *)(src))[2] << 16) | (((TI_UINT8 *)(src))[3] << 24)
 #else
 
 #error "Must define byte order (BIG/LITTLE ENDIAN)"
